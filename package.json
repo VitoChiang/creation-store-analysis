@@ -1,6 +1,7 @@
 {
   "name": "creation-store-analysis",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "homepage": "https://VitoChiang.github.io/creation-store-analysis",
   "scripts": {

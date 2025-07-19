@@ -18,7 +18,10 @@ const WarehouseAnalysisSystem = () => {
   const loadAndProcessData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/data-07-19.xlsx');
+      // 檢查是否在 GitHub Pages 環境
+      const isProduction = window.location.hostname === 'vitochiang.github.io';
+      const basePath = isProduction ? '/creation-store-analysis/' : '/';
+      const response = await fetch(`${basePath}data-07-19.xlsx`);
       const arrayBuffer = await response.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { cellStyles: true, cellFormula: true, cellDates: true, cellNF: true, sheetStubs: true });
       
