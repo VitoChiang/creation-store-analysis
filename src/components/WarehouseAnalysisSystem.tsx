@@ -20,7 +20,7 @@ const WarehouseAnalysisSystem = () => {
       setLoading(true);
       const response = await fetch('/data-07-19.xlsx');
       const arrayBuffer = await response.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { cellStyles: true, cellFormulas: true, cellDates: true, cellNF: true, sheetStubs: true });
+      const workbook = XLSX.read(arrayBuffer, { cellStyles: true, cellFormula: true, cellDates: true, cellNF: true, sheetStubs: true });
       
       const mergeData = XLSX.utils.sheet_to_json(workbook.Sheets['合併']);
       const inventory2025Data = XLSX.utils.sheet_to_json(workbook.Sheets['2025年6月庫存量']);
@@ -198,7 +198,7 @@ const WarehouseAnalysisSystem = () => {
 
   const toggleExpand = (category: string, type: string) => {
     const setters: Record<string, any> = { categories: setExpandedCategories, warehouse2024: setExpandedWarehouse2024, warehouse2025: setExpandedWarehouse2025 };
-    setters[type](prev => ({ ...prev, [category]: !prev[category] }));
+    setters[type]((prev: Record<string, boolean>) => ({ ...prev, [category]: !prev[category] }));
   };
 
   const renderWarehouseSummary = (data: any[], year: string, bgColor: string) => (
@@ -246,7 +246,7 @@ const WarehouseAnalysisSystem = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {data.map((item: any, index: number) => (
               <React.Fragment key={index}>
-                <tr className="hover:bg-gray-50" onClick={(e) => { if (e.currentTarget === e.target || !e.target.closest('button')) toggleFunc(item.中類); }}>
+                <tr className="hover:bg-gray-50" onClick={(e) => { if (e.currentTarget === e.target || !(e.target as Element)?.closest('button')) toggleFunc(item.中類); }}>
                   <td className="px-4 py-4 whitespace-nowrap font-medium text-gray-900">{item.中類}</td>
                   {['總計金額', '大昌華嘉', '豐安', '大榮', '川田', '成功', '宗運'].map(field => (
                     <td key={field} className={`px-4 py-4 whitespace-nowrap text-right ${field === '總計金額' ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
@@ -448,7 +448,7 @@ const WarehouseAnalysisSystem = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {data.detailedSummary.map((item: any, index: number) => (
                   <React.Fragment key={index}>
-                    <tr className="hover:bg-gray-50" onClick={(e) => { if (e.currentTarget === e.target || !e.target.closest('button')) toggleExpand(item.中類, 'categories'); }}>
+                    <tr className="hover:bg-gray-50" onClick={(e) => { if (e.currentTarget === e.target || !(e.target as Element)?.closest('button')) toggleExpand(item.中類, 'categories'); }}>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-gray-600 font-medium">{index + 1}</td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{item.中類}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-gray-900 font-semibold">{formatNumber(item.倉租2025)}</td>
