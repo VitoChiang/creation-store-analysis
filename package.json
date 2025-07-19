@@ -1,0 +1,32 @@
+{
+  "name": "creation-store-analysis",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.7.0",
+    "lodash": "^4.17.21",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "recharts": "^3.1.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.20",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  }
+}
