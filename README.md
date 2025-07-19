@@ -27,29 +27,33 @@ npm run preview
 
 ## GitHub Pages 部署
 
-### 1. 準備 GitHub 倉庫
-1. 在 GitHub 建立新的倉庫（例如：creation-store-analysis）
-2. 將本地代碼推送到 GitHub
+### 方法 1: 自動部署（推薦）
 
-### 2. 更新設定
-將 `package.json` 中的 `homepage` 改為您的 GitHub 用戶名：
-```json
-"homepage": "https://您的用戶名.github.io/creation-store-analysis"
-```
+1. **推送代碼到 GitHub**：
+   ```bash
+   git add .
+   git commit -m "Deploy to GitHub Pages"
+   git push origin main
+   ```
 
-### 3. 部署到 GitHub Pages
+2. **啟用 GitHub Pages**：
+   - 進入 GitHub 倉庫設定頁面
+   - 找到 "Pages" 設定
+   - Source 選擇 "GitHub Actions"
+   - 儲存設定
+
+3. **自動部署**：
+   - 每次推送到 `main` 分支時會自動觸發部署
+   - GitHub Actions 會自動建置並部署到 GitHub Pages
+
+### 方法 2: 手動部署
+
+如果需要手動部署：
 ```bash
 npm run deploy
 ```
 
-### 4. 啟用 GitHub Pages
-1. 進入 GitHub 倉庫設定頁面
-2. 找到 "Pages" 設定
-3. Source 選擇 "Deploy from a branch"
-4. Branch 選擇 "gh-pages"
-5. 儲存設定
-
-### 5. 訪問網站
+### 訪問網站
 部署完成後，可透過以下網址訪問：
 ```
 https://您的用戶名.github.io/creation-store-analysis
@@ -59,6 +63,7 @@ https://您的用戶名.github.io/creation-store-analysis
 
 - `npm run predeploy`: 自動建置專案
 - `npm run deploy`: 將 dist 目錄部署到 gh-pages 分支
+- GitHub Actions: 自動建置和部署（推薦）
 
 ## 注意事項
 
