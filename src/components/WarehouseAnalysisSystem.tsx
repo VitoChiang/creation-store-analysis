@@ -249,19 +249,21 @@ const WarehouseAnalysisSystem = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {data.map((item: any, index: number) => (
               <React.Fragment key={index}>
-                <tr className="hover:bg-gray-50" onClick={(e) => { if (e.currentTarget === e.target || !(e.target as Element)?.closest('button')) toggleFunc(item.中類); }}>
+                <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => toggleFunc(item.中類)}>
                   <td className="px-4 py-4 whitespace-nowrap font-medium text-gray-900">{item.中類}</td>
                   {['總計金額', '大昌華嘉', '豐安', '大榮', '川田', '成功', '宗運'].map(field => (
                     <td key={field} className={`px-4 py-4 whitespace-nowrap text-right ${field === '總計金額' ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}>
                       {formatNumber(item[field])}
                     </td>
                   ))}
-                  <td className="px-4 py-4 whitespace-nowrap text-center">
-                    <button className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${expandedState[item.中類] ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                      <svg className={`w-4 h-4 transform transition-transform duration-200 ${expandedState[item.中類] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="flex justify-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${expandedState[item.中類] ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                        <svg className={`w-4 h-4 transform transition-transform duration-200 ${expandedState[item.中類] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
                   </td>
                 </tr>
                 {expandedState[item.中類] && (
@@ -451,7 +453,7 @@ const WarehouseAnalysisSystem = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {data.detailedSummary.map((item: any, index: number) => (
                   <React.Fragment key={index}>
-                    <tr className="hover:bg-gray-50" onClick={(e) => { if (e.currentTarget === e.target || !(e.target as Element)?.closest('button')) toggleExpand(item.中類, 'categories'); }}>
+                    <tr className={`${item.變化金額 > 50000 ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-gray-50'} cursor-pointer`} onClick={() => toggleExpand(item.中類, 'categories')}>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-gray-600 font-medium">{index + 1}</td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{item.中類}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-gray-900 font-semibold">{formatNumber(item.倉租2025)}</td>
@@ -462,13 +464,17 @@ const WarehouseAnalysisSystem = () => {
                       <td className={`px-6 py-4 whitespace-nowrap text-right font-medium ${getTrendColor(item.變化率)}`}>
                         {formatPercent(item.變化率)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">{getTrendIcon(item.變化率)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${expandedCategories[item.中類] ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                          <svg className={`w-4 h-4 transform transition-transform duration-200 ${expandedCategories[item.中類] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex justify-center">{getTrendIcon(item.變化率)}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex justify-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${expandedCategories[item.中類] ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                            <svg className={`w-4 h-4 transform transition-transform duration-200 ${expandedCategories[item.中類] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                     
