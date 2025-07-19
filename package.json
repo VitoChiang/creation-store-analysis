@@ -2,10 +2,13 @@
   "name": "creation-store-analysis",
   "version": "1.0.0",
   "main": "index.js",
+  "homepage": "https://VitoChiang.github.io/creation-store-analysis",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +29,7 @@
   "devDependencies": {
     "@types/lodash": "^4.17.20",
     "autoprefixer": "^10.4.21",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17"
   }
