@@ -13,7 +13,7 @@ npm install
 ```bash
 npm run dev
 ```
-開發伺服器將在 http://localhost:5173 啟動
+開發伺服器將在 http://localhost:3666 啟動
 
 ### 建置專案
 ```bash
