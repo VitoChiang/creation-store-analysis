@@ -329,7 +329,7 @@ const WarehouseAnalysisSystem = () => {
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           {[
-            { id: 'pie', label: '2025金額倉租占比', icon: '🥧' },
+            { id: 'pie', label: '2025年6月倉租金額占比', icon: '🥧' },
             { id: 'table', label: '產品別倉租統計表', icon: '📊' },
             { id: 'newItems', label: '2025新增品項', icon: '🆕' },
             { id: 'discontinuedItems', label: '2025未入倉品項', icon: '📦' },
@@ -345,7 +345,7 @@ const WarehouseAnalysisSystem = () => {
 
       {activeTab === 'pie' && (
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">2025年金額倉租占比分析</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">2025年6月倉租金額占比分析</h2>
           <div className="flex gap-6">
             <div className="flex-1">
               <div className="h-[500px]">
@@ -369,15 +369,16 @@ const WarehouseAnalysisSystem = () => {
                       data={data.detailedSummary}
                       cx="50%" cy="50%" labelLine={false}
                       label={({中類, percent}: any) => `${中類} ${(percent * 100).toFixed(1)}%`}
+                      labelStyle={{ fill: '#000000', fontSize: '14px', fontWeight: '900' }}
                       outerRadius={160} fill="#8884d8" dataKey="倉租2025"
                       onClick={(entry: any) => setSelectedPieCategory(entry)}
+                      onMouseEnter={(entry: any) => setSelectedPieCategory(entry)}
                       style={{ cursor: 'pointer' }}
                     >
                       {data.detailedSummary.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={selectedPieCategory?.中類 === entry.中類 ? '#90CAF9' : `url(#gradient${index})`} stroke="none" style={{filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.1))'}} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: any) => formatNumber(value)} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
