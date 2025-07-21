@@ -28,37 +28,29 @@ const WarehouseAnalysisSystem = () => {
       // 檢查是否在 GitHub Pages 環境
       const isProduction = window.location.hostname === 'vitochiang.github.io';
       const basePath = isProduction ? '/creation-store-analysis/' : '/';
-      const response = await fetch(`${basePath}data-07-19.xlsx`);
+      const response = await fetch(`${basePath}data-07-21.xlsx`);
       const arrayBuffer = await response.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { cellStyles: true, cellFormula: true, cellDates: true, cellNF: true, sheetStubs: true });
       
-      const mergeData = XLSX.utils.sheet_to_json(workbook.Sheets['合併']);
-      const inventory2025Data = XLSX.utils.sheet_to_json(workbook.Sheets['2025年6月庫存量']);
-      const inventory2024Data = XLSX.utils.sheet_to_json(workbook.Sheets['2024年6月庫存量']);
+      // 統一使用「合併(含庫存量)」作為主要資料來源
       const mergeWithInventoryData = XLSX.utils.sheet_to_json(workbook.Sheets['合併(含庫存量)']);
+      // 保留「合併」工作表用於外倉資料查詢
+      const mergeData = XLSX.utils.sheet_to_json(workbook.Sheets['合併']);
 
-      const createInventoryMap = (data: any[]) => {
-        const map: Record<string, number> = {};
-        data.forEach(item => {
-          if (item['料號'] && typeof item['期末存量'] === 'number') {
-            map[item['料號']] = item['期末存量'];
-          }
-        });
-        return map;
-      };
-
-      const inventory2025Map = createInventoryMap(inventory2025Data);
-      const inventory2024Map = createInventoryMap(inventory2024Data);
-      const data2024 = mergeData.filter((row: any) => row['年月'] === 202406);
-      const data2025 = mergeData.filter((row: any) => row['年月'] === 202506);
+      const data2024 = mergeWithInventoryData.filter((row: any) => row['年月'] === 202406);
+      const data2025 = mergeWithInventoryData.filter((row: any) => row['年月'] === 202506);
+      
+      // 為外倉分析建立外倉資料映射（從「合併」工作表）
+      const mergeData2024 = mergeData.filter((row: any) => row['年月'] === 202406);
+      const mergeData2025 = mergeData.filter((row: any) => row['年月'] === 202506);
 
       setData({
         majorCategorySummary: calculateMajorCategorySummary(data2024, data2025),
         detailedSummary: calculateDetailedSummary(data2024, data2025),
-        warehouseAnalysis2024: calculateWarehouseAnalysis(data2024, inventory2024Map),
-        warehouseAnalysis2025: calculateWarehouseAnalysis(data2025, inventory2025Map),
-        newItems: calculateNewItems(data2024, data2025, inventory2025Map),
-        discontinuedItems: calculateDiscontinuedItems(data2024, data2025, inventory2024Map),
+        warehouseAnalysis2024: calculateWarehouseAnalysis(data2024, mergeData2024),
+        warehouseAnalysis2025: calculateWarehouseAnalysis(data2025, mergeData2025),
+        newItems: calculateNewItems(data2024, data2025),
+        discontinuedItems: calculateDiscontinuedItems(data2024, data2025),
         productStats: calculateProductStats(mergeWithInventoryData)
       });
     } catch (err: any) {
@@ -77,8 +69,8 @@ const WarehouseAnalysisSystem = () => {
     const rawMaterial2024 = rawMaterialData.filter((item: any) => item['年月'] === 202406);
     const rawMaterial2025 = rawMaterialData.filter((item: any) => item['年月'] === 202506);
     
-    const rawMaterialRent2024 = _.sumBy(rawMaterial2024, '費用總額');
-    const rawMaterialRent2025 = _.sumBy(rawMaterial2025, '費用總額');
+    const rawMaterialRent2024 = _.sumBy(rawMaterial2024, ' 費用總額 ');
+    const rawMaterialRent2025 = _.sumBy(rawMaterial2025, ' 費用總額 ');
     
     // 計算原材物料的中分類明細
     const rawMaterialMidDetails = _(rawMaterialData)
@@ -87,8 +79,8 @@ const WarehouseAnalysisSystem = () => {
         const mid2024Items = midItems.filter((item: any) => item['年月'] === 202406);
         const mid2025Items = midItems.filter((item: any) => item['年月'] === 202506);
         
-        const midRent2024 = _.sumBy(mid2024Items, '費用總額');
-        const midRent2025 = _.sumBy(mid2025Items, '費用總額');
+        const midRent2024 = _.sumBy(mid2024Items, ' 費用總額 ');
+        const midRent2025 = _.sumBy(mid2025Items, ' 費用總額 ');
         
         return {
           中類: midCategory,
@@ -110,8 +102,8 @@ const WarehouseAnalysisSystem = () => {
         const items2024 = allItems.filter((item: any) => item['年月'] === 202406);
         const items2025 = allItems.filter((item: any) => item['年月'] === 202506);
         
-        const rent2024 = _.sumBy(items2024, '費用總額');
-        const rent2025 = _.sumBy(items2025, '費用總額');
+        const rent2024 = _.sumBy(items2024, ' 費用總額 ');
+        const rent2025 = _.sumBy(items2025, ' 費用總額 ');
         
         const changeAmount = rent2025 - rent2024;
         const changeRate = rent2024 > 0 ? (changeAmount / rent2024 * 100) : (rent2025 > 0 ? 100 : 0);
@@ -123,8 +115,8 @@ const WarehouseAnalysisSystem = () => {
             const mid2024Items = midItems.filter((item: any) => item['年月'] === 202406);
             const mid2025Items = midItems.filter((item: any) => item['年月'] === 202506);
             
-            const midRent2024 = _.sumBy(mid2024Items, '費用總額');
-            const midRent2025 = _.sumBy(mid2025Items, '費用總額');
+            const midRent2024 = _.sumBy(mid2024Items, ' 費用總額 ');
+            const midRent2025 = _.sumBy(mid2025Items, ' 費用總額 ');
             
             return {
               中類: midCategory,
@@ -195,8 +187,8 @@ const WarehouseAnalysisSystem = () => {
           };
         }).sort((a, b) => b.變化金額 - a.變化金額);
         
-        const totalRent2024 = _.sumBy(items2024, '費用總額');
-        const totalRent2025 = _.sumBy(items2025, '費用總額');
+        const totalRent2024 = _.sumBy(items2024, ' 費用總額 ');
+        const totalRent2025 = _.sumBy(items2025, ' 費用總額 ');
         
         return {
           中類: midCategory,
@@ -213,23 +205,25 @@ const WarehouseAnalysisSystem = () => {
       .value();
   };
 
-  const calculateWarehouseAnalysis = (dataYear: any[], inventoryMap: Record<string, number>) => {
-    const totalRentAll = _.sumBy(dataYear, '費用總額');
-    const totalInventoryAll = _.sumBy(dataYear, (item: any) => inventoryMap[item['料號']] || 0);
+  const calculateWarehouseAnalysis = (dataYear: any[], warehouseData: any[]) => {
+    const totalRentAll = _.sumBy(dataYear, ' 費用總額 ');
+    const totalInventoryAll = _.sumBy(dataYear, (item: any) => item['外倉庫存數量'] || 0);
     
     return _(dataYear)
       .groupBy('中類')
       .map((items, midCategory) => {
+        // 從對應的「合併」工作表資料中取得外倉分佈
+        const correspondingWarehouseItems = warehouseData.filter((item: any) => item['中類'] === midCategory);
         const warehouseMap: Record<string, number> = {};
-        _(items).groupBy('外倉倉別').forEach((warehouseItems, warehouse) => {
-          warehouseMap[warehouse] = Math.round(_.sumBy(warehouseItems, '費用總額'));
+        _(correspondingWarehouseItems).groupBy('外倉倉別').forEach((warehouseItems, warehouse) => {
+          warehouseMap[warehouse] = Math.round(_.sumBy(warehouseItems, ' 費用總額 '));
         });
         
         const subCategoryDetails = _(items)
           .groupBy('小分類')
           .map((subItems, subCategory) => {
-            const totalInventory = _.sumBy(subItems, (item: any) => inventoryMap[item['料號']] || 0);
-            const rentAmount = Math.round(_.sumBy(subItems, '費用總額'));
+            const totalInventory = _.sumBy(subItems, (item: any) => item['外倉庫存數量'] || 0);
+            const rentAmount = Math.round(_.sumBy(subItems, ' 費用總額 '));
             return {
               小分類: subCategory,
               庫存數量: totalInventory,
@@ -243,7 +237,7 @@ const WarehouseAnalysisSystem = () => {
         
         return {
           中類: midCategory,
-          總計金額: Math.round(_.sumBy(items, '費用總額')),
+          總計金額: Math.round(_.sumBy(items, ' 費用總額 ')),
           大昌華嘉: warehouseMap['大昌華嘉'] || 0,
           豐安: warehouseMap['豐安'] || 0,
           大榮: warehouseMap['大榮'] || 0,
@@ -258,7 +252,7 @@ const WarehouseAnalysisSystem = () => {
       .value();
   };
 
-  const calculateNewItems = (data2024: any[], data2025: any[], inventory2025Map: Record<string, number>) => {
+  const calculateNewItems = (data2024: any[], data2025: any[]) => {
     const existing2024Items = new Set(data2024.map((item: any) => item['料號']));
     const items2025ByCode = new Map();
     data2025.forEach((item: any) => items2025ByCode.set(item['料號'], item));
@@ -269,8 +263,8 @@ const WarehouseAnalysisSystem = () => {
         newItems2025.push({
           料號: item['料號'],
           商品名稱: item['商品名稱'],
-          庫存數量: inventory2025Map[item['料號']] || 0,
-          倉租金額: Math.round(item['費用總額']),
+          庫存數量: item['外倉庫存數量'] || 0,
+          倉租金額: Math.round(item[' 費用總額 ']),
           外倉名稱: item['外倉倉別']
         });
       }
@@ -278,7 +272,7 @@ const WarehouseAnalysisSystem = () => {
     return newItems2025.sort((a, b) => b.倉租金額 - a.倉租金額);
   };
 
-  const calculateDiscontinuedItems = (data2024: any[], data2025: any[], inventory2024Map: Record<string, number>) => {
+  const calculateDiscontinuedItems = (data2024: any[], data2025: any[]) => {
     const existing2025Items = new Set(data2025.map((item: any) => item['料號']));
     const items2024ByCode = new Map();
     data2024.forEach((item: any) => items2024ByCode.set(item['料號'], item));
@@ -289,8 +283,8 @@ const WarehouseAnalysisSystem = () => {
         discontinuedItems2024.push({
           料號: item['料號'],
           商品名稱: item['商品名稱'],
-          庫存數量: inventory2024Map[item['料號']] || 0,
-          倉租金額: Math.round(item['費用總額']),
+          庫存數量: item['外倉庫存數量'] || 0,
+          倉租金額: Math.round(item[' 費用總額 ']),
           外倉名稱: item['外倉倉別']
         });
       }
@@ -311,8 +305,8 @@ const WarehouseAnalysisSystem = () => {
         const items2025 = allItems.filter((item: any) => item['年月'] === 202506);
         
         // 計算大類總計
-        const qty2024 = _.sumBy(items2024, item => item['庫存數量'] || 0);
-        const qty2025 = _.sumBy(items2025, item => item['庫存數量'] || 0);
+        const qty2024 = _.sumBy(items2024, item => item['外倉庫存數量'] || 0);
+        const qty2025 = _.sumBy(items2025, item => item['外倉庫存數量'] || 0);
         const amount2024 = _.sumBy(items2024, item => Number(item[' 費用總額 ']) || 0);
         const amount2025 = _.sumBy(items2025, item => Number(item[' 費用總額 ']) || 0);
         
@@ -328,8 +322,8 @@ const WarehouseAnalysisSystem = () => {
             const mid2024 = midItems.filter((item: any) => item['年月'] === 202406);
             const mid2025 = midItems.filter((item: any) => item['年月'] === 202506);
             
-            const midQty2024 = _.sumBy(mid2024, item => item['庫存數量'] || 0);
-            const midQty2025 = _.sumBy(mid2025, item => item['庫存數量'] || 0);
+            const midQty2024 = _.sumBy(mid2024, item => item['外倉庫存數量'] || 0);
+            const midQty2025 = _.sumBy(mid2025, item => item['外倉庫存數量'] || 0);
             const midAmount2024 = _.sumBy(mid2024, item => Number(item[' 費用總額 ']) || 0);
             const midAmount2025 = _.sumBy(mid2025, item => Number(item[' 費用總額 ']) || 0);
             
@@ -345,8 +339,8 @@ const WarehouseAnalysisSystem = () => {
                 const sub2024 = subItems.filter((item: any) => item['年月'] === 202406);
                 const sub2025 = subItems.filter((item: any) => item['年月'] === 202506);
                 
-                const subQty2024 = _.sumBy(sub2024, item => item['庫存數量'] || 0);
-                const subQty2025 = _.sumBy(sub2025, item => item['庫存數量'] || 0);
+                const subQty2024 = _.sumBy(sub2024, item => item['外倉庫存數量'] || 0);
+                const subQty2025 = _.sumBy(sub2025, item => item['外倉庫存數量'] || 0);
                 const subAmount2024 = _.sumBy(sub2024, item => Number(item[' 費用總額 ']) || 0);
                 const subAmount2025 = _.sumBy(sub2025, item => Number(item[' 費用總額 ']) || 0);
                 
@@ -701,7 +695,7 @@ const WarehouseAnalysisSystem = () => {
                         <table className="min-w-full">
                           <thead className="bg-gray-100">
                             <tr>
-                              {['小分類', '庫存數量', '占總庫存 %', '倉租金額', '占總倉租 %'].map(header => (
+                              {['小分類', '外倉庫存數量', '占總庫存 %', '倉租金額', '占總倉租 %'].map(header => (
                                 <th key={header} className={`px-4 py-2 text-xs font-medium text-gray-600 ${header === '小分類' ? 'text-left' : header.includes('%') ? 'text-center' : 'text-right'}`}>
                                   {header}
                                 </th>
@@ -1246,7 +1240,7 @@ const WarehouseAnalysisSystem = () => {
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">料號</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">商品名稱</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{isNew ? '庫存數量' : '2024庫存數量'}</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{isNew ? '外倉庫存數量' : '2024外倉庫存數量'}</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{isNew ? '倉租金額' : '2024倉租金額'}</th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{isNew ? '外倉名稱' : '2024外倉名稱'}</th>
                     </tr>
