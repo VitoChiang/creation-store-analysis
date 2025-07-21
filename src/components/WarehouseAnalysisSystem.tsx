@@ -69,10 +69,43 @@ const WarehouseAnalysisSystem = () => {
   };
 
   const calculateMajorCategorySummary = (data2024: any[], data2025: any[]) => {
+    // 先計算原材物料類別的資料
+    const rawMaterialData = _(data2024.concat(data2025))
+      .filter((item: any) => item['大類'] === '原材物料')
+      .value();
+    
+    const rawMaterial2024 = rawMaterialData.filter((item: any) => item['年月'] === 202406);
+    const rawMaterial2025 = rawMaterialData.filter((item: any) => item['年月'] === 202506);
+    
+    const rawMaterialRent2024 = _.sumBy(rawMaterial2024, '費用總額');
+    const rawMaterialRent2025 = _.sumBy(rawMaterial2025, '費用總額');
+    
+    // 計算原材物料的中分類明細
+    const rawMaterialMidDetails = _(rawMaterialData)
+      .groupBy('中類')
+      .map((midItems, midCategory) => {
+        const mid2024Items = midItems.filter((item: any) => item['年月'] === 202406);
+        const mid2025Items = midItems.filter((item: any) => item['年月'] === 202506);
+        
+        const midRent2024 = _.sumBy(mid2024Items, '費用總額');
+        const midRent2025 = _.sumBy(mid2025Items, '費用總額');
+        
+        return {
+          中類: midCategory,
+          倉租2024: Math.round(midRent2024),
+          倉租2025: Math.round(midRent2025),
+          變化金額: Math.round(midRent2025 - midRent2024),
+          變化率: midRent2024 > 0 ? ((midRent2025 - midRent2024) / midRent2024 * 100) : (midRent2025 > 0 ? 100 : 0)
+        };
+      })
+      .orderBy(['倉租2025'], ['desc'])
+      .value();
+    
+    // 計算非原材物料類別
     const allCategories = _(data2024.concat(data2025))
       .groupBy('大類')
       .map((allItems, majorCategory) => {
-        if (majorCategory === '原料') return null; // 排除原料
+        if (majorCategory === '原材物料') return null; // 排除原材物料
         
         const items2024 = allItems.filter((item: any) => item['年月'] === 202406);
         const items2025 = allItems.filter((item: any) => item['年月'] === 202506);
@@ -117,23 +150,24 @@ const WarehouseAnalysisSystem = () => {
       .orderBy(['倉租2025'], ['desc'])
       .value();
     
-    // 取前10大，其余的合併為"其他"
+    // 取前10大，其余的（包含原材物料）合併為"其他"
     const top10 = allCategories.slice(0, 10);
     const others = allCategories.slice(10);
     
-    if (others.length > 0) {
-      const othersTotal = {
-        大類: '其他',
-        倉租2024: Math.round(_.sumBy(others, '倉租2024')),
-        倉租2025: Math.round(_.sumBy(others, '倉租2025')),
-        變化金額: Math.round(_.sumBy(others, '變化金額')),
-        變化率: 0, // 其他的變化率不適用
-        中分類明細: _.flatten(others.map(item => item.中分類明細 || [])).sort((a, b) => b.倉租2025 - a.倉租2025)
-      };
-      return [...top10, othersTotal];
-    }
+    // 創建"其他"類別，包含第11名以後的類別和原材物料
+    const othersTotal = {
+      大類: '其他',
+      倉租2024: Math.round(_.sumBy(others, '倉租2024') + rawMaterialRent2024),
+      倉租2025: Math.round(_.sumBy(others, '倉租2025') + rawMaterialRent2025),
+      變化金額: Math.round(_.sumBy(others, '變化金額') + (rawMaterialRent2025 - rawMaterialRent2024)),
+      變化率: 0, // 其他的變化率不適用
+      中分類明細: [
+        ...rawMaterialMidDetails,
+        ..._.flatten(others.map(item => item.中分類明細 || []))
+      ].sort((a, b) => b.倉租2025 - a.倉租2025)
+    };
     
-    return top10;
+    return [...top10, othersTotal];
   };
 
   const calculateDetailedSummary = (data2024: any[], data2025: any[]) => {
@@ -174,7 +208,7 @@ const WarehouseAnalysisSystem = () => {
         };
       })
       .orderBy(['倉租2025'], ['desc'])
-      .filter((item: any) => item.中類 !== '原料')
+      .filter((item: any) => item.中類 !== '原材物料')
       .slice(0, 10)
       .value();
   };
@@ -220,7 +254,7 @@ const WarehouseAnalysisSystem = () => {
         };
       })
       .orderBy(['總計金額'], ['desc'])
-      .filter((item: any) => item.中類 !== '原料')
+      .filter((item: any) => item.中類 !== '原材物料')
       .value();
   };
 
@@ -271,7 +305,7 @@ const WarehouseAnalysisSystem = () => {
     return _(data2024.concat(data2025))
       .groupBy('大類')
       .map((allItems, majorCategory) => {
-        if (majorCategory === '原料') return null; // 排除原料
+        if (majorCategory === '原材物料') return null; // 排除原材物料
         
         const items2024 = allItems.filter((item: any) => item['年月'] === 202406);
         const items2025 = allItems.filter((item: any) => item['年月'] === 202506);
