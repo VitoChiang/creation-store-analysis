@@ -1008,6 +1008,45 @@ const WarehouseAnalysisSystem = () => {
                     ))}
                   </React.Fragment>
                 ))}
+                
+                {/* 總計行 */}
+                {(() => {
+                  const sortedData = getSortedProductStats();
+                  const totalQty2025 = _.sumBy(sortedData, '數量2025');
+                  const totalAmount2025 = _.sumBy(sortedData, '金額2025');
+                  const totalQty2024 = _.sumBy(sortedData, '數量2024');
+                  const totalAmount2024 = _.sumBy(sortedData, '金額2024');
+                  const totalQtyDiff = totalQty2025 - totalQty2024;
+                  const totalAmountDiff = totalAmount2025 - totalAmount2024;
+                  const totalQtyPercent = totalQty2024 > 0 ? (totalQtyDiff / totalQty2024 * 100) : (totalQty2025 > 0 ? 100 : 0);
+                  const totalAmountPercent = totalAmount2024 > 0 ? (totalAmountDiff / totalAmount2024 * 100) : (totalAmount2025 > 0 ? 100 : 0);
+                  
+                  return (
+                    <tr className="bg-blue-100 font-bold border-t-2 border-blue-300">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-gray-800 border border-gray-300" style={{width: '90px'}}>-</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-800 border border-gray-300" style={{width: '320px'}}>
+                        總計 (Top {productStatsLimit === 'all' ? '全部' : productStatsLimit})
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap border border-gray-300" style={{width: '60px'}}></td>
+                      <td className="px-3 py-4 whitespace-nowrap text-right text-gray-800 border border-gray-300">{formatNumber(totalQty2025)}</td>
+                      <td className="px-3 py-4 whitespace-nowrap text-right text-gray-800 border border-gray-300">{formatNumber(totalAmount2025)}</td>
+                      <td className="px-3 py-4 whitespace-nowrap text-right text-gray-800 border border-gray-300">{formatNumber(totalQty2024)}</td>
+                      <td className="px-3 py-4 whitespace-nowrap text-right text-gray-800 border border-gray-300">{formatNumber(totalAmount2024)}</td>
+                      <td className={`px-3 py-4 whitespace-nowrap text-right border border-gray-300 ${totalQtyDiff >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {totalQtyDiff >= 0 ? '+' : ''}{formatNumber(totalQtyDiff)}
+                      </td>
+                      <td className={`px-1 py-4 whitespace-nowrap text-right border border-gray-300 ${getTrendColor(totalQtyPercent)}`}>
+                        {formatPercent(totalQtyPercent)}
+                      </td>
+                      <td className={`px-3 py-4 whitespace-nowrap text-right border border-gray-300 ${totalAmountDiff >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {totalAmountDiff >= 0 ? '+' : ''}{formatNumber(totalAmountDiff)}
+                      </td>
+                      <td className={`px-1 py-4 whitespace-nowrap text-right border border-gray-300 ${getTrendColor(totalAmountPercent)}`}>
+                        {formatPercent(totalAmountPercent)}
+                      </td>
+                    </tr>
+                  );
+                })()}
               </tbody>
             </table>
           </div>
