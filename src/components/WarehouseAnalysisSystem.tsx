@@ -472,6 +472,147 @@ const WarehouseAnalysisSystem = () => {
     }
   };
 
+  const exportProductStatsToExcel = () => {
+    const sortedData = getSortedProductStats();
+    const workbook = XLSX.utils.book_new();
+    
+    // 準備Excel數據，包含分層結構
+    const excelData: any[] = [];
+    
+    // 添加表頭
+    excelData.push([
+      '層級', '排名', '大類/中類/小類', '2025數量', '2025金額', '2024數量', '2024金額', 
+      '數量差異', '數量%', '金額差異', '金額%'
+    ]);
+    
+    // 添加數據行
+    sortedData.forEach((item: any, index: number) => {
+      // 大類行
+      excelData.push([
+        '大類',
+        item.金額排名,
+        item.大類,
+        item.數量2025,
+        item.金額2025,
+        item.數量2024,
+        item.金額2024,
+        item.數量差異,
+        item.數量百分比,
+        item.金額差異,
+        item.金額百分比
+      ]);
+      
+      // 中類行
+      if (item.中分類明細) {
+        item.中分類明細.forEach((midItem: any) => {
+          excelData.push([
+            '中類',
+            '',
+            `　${midItem.中類}`,
+            midItem.數量2025,
+            midItem.金額2025,
+            midItem.數量2024,
+            midItem.金額2024,
+            midItem.數量差異,
+            midItem.數量百分比,
+            midItem.金額差異,
+            midItem.金額百分比
+          ]);
+          
+          // 小類行
+          if (midItem.小分類明細) {
+            midItem.小分類明細.forEach((subItem: any) => {
+              excelData.push([
+                '小類',
+                '',
+                `　　${subItem.小分類}`,
+                subItem.數量2025,
+                subItem.金額2025,
+                subItem.數量2024,
+                subItem.金額2024,
+                subItem.數量差異,
+                subItem.數量百分比,
+                subItem.金額差異,
+                subItem.金額百分比
+              ]);
+            });
+          }
+        });
+      }
+    });
+    
+    // 添加總計行
+    const totalQty2025 = _.sumBy(sortedData, '數量2025');
+    const totalAmount2025 = _.sumBy(sortedData, '金額2025');
+    const totalQty2024 = _.sumBy(sortedData, '數量2024');
+    const totalAmount2024 = _.sumBy(sortedData, '金額2024');
+    const totalQtyDiff = totalQty2025 - totalQty2024;
+    const totalAmountDiff = totalAmount2025 - totalAmount2024;
+    const totalQtyPercent = totalQty2024 > 0 ? (totalQtyDiff / totalQty2024 * 100) : 0;
+    const totalAmountPercent = totalAmount2024 > 0 ? (totalAmountDiff / totalAmount2024 * 100) : 0;
+    
+    excelData.push([
+      '總計',
+      '',
+      `總計 (Top ${productStatsLimit === 'all' ? '全部' : productStatsLimit})`,
+      totalQty2025,
+      totalAmount2025,
+      totalQty2024,
+      totalAmount2024,
+      totalQtyDiff,
+      totalQtyPercent,
+      totalAmountDiff,
+      totalAmountPercent
+    ]);
+    
+    // 創建工作表
+    const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+    
+    // 設定欄寬
+    const colWidths = [
+      {wch: 8},   // 層級
+      {wch: 6},   // 排名
+      {wch: 35},  // 大類/中類/小類
+      {wch: 12},  // 2025數量
+      {wch: 12},  // 2025金額
+      {wch: 12},  // 2024數量
+      {wch: 12},  // 2024金額
+      {wch: 12},  // 數量差異
+      {wch: 10},  // 數量%
+      {wch: 12},  // 金額差異
+      {wch: 10}   // 金額%
+    ];
+    worksheet['!cols'] = colWidths;
+    
+    // 設定群組功能 - 為中類和小類設定outline level，並預設為收合狀態
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      const levelCell = XLSX.utils.encode_cell({r: R, c: 0});
+      const level = worksheet[levelCell]?.v;
+      
+      if (level === '中類') {
+        // 設定中類的outline level為1，並預設收合
+        if (!worksheet['!rows']) worksheet['!rows'] = [];
+        if (!worksheet['!rows'][R]) worksheet['!rows'][R] = {};
+        worksheet['!rows'][R].level = 1;
+        worksheet['!rows'][R].hidden = true;  // 預設收合
+      } else if (level === '小類') {
+        // 設定小類的outline level為2，並預設收合
+        if (!worksheet['!rows']) worksheet['!rows'] = [];
+        if (!worksheet['!rows'][R]) worksheet['!rows'][R] = {};
+        worksheet['!rows'][R].level = 2;
+        worksheet['!rows'][R].hidden = true;  // 預設收合
+      }
+    }
+    
+    // 添加到工作簿
+    XLSX.utils.book_append_sheet(workbook, worksheet, '產品別統計');
+    
+    // 下載檔案
+    const fileName = `產品別金額數量統計表_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  };
+
   const renderWarehouseSummary = (data: any[], year: string, bgColor: string) => (
     <div className={`mb-6 ${bgColor} rounded-lg p-6 border border-gray-200`}>
       <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">{year}年各外倉總計資訊</h3>
@@ -831,17 +972,28 @@ const WarehouseAnalysisSystem = () => {
               <h2 className="text-xl font-semibold text-gray-800">產品別金額數量統計表</h2>
               <p className="text-sm text-gray-600 mt-1">按大類分析，可展開中分類及小分類詳細資訊，排名以 2025 金額排序</p>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">顯示 Top:</label>
-              <select 
-                value={productStatsLimit} 
-                onChange={(e) => setProductStatsLimit(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => exportProductStatsToExcel()}
+                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
               >
-                <option value={10}>10</option>
-                <option value={15}>15</option>
-                <option value="all">All</option>
-              </select>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                下載 Excel
+              </button>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">顯示 Top:</label>
+                <select 
+                  value={productStatsLimit} 
+                  onChange={(e) => setProductStatsLimit(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value="all">All</option>
+                </select>
+              </div>
             </div>
           </div>
           
