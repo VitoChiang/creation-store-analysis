@@ -480,7 +480,7 @@ const WarehouseAnalysisSystem = () => {
     ]);
     
     // 添加數據行
-    sortedData.forEach((item: any, index: number) => {
+    sortedData.forEach((item: any) => {
       // 大類行
       excelData.push([
         '大類',
